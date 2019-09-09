@@ -5,13 +5,13 @@ pipeline {
 
        stage('SCM Checkout') {
             steps {
-                git credentialsId: '8e237d54-cc07-4aad-a3fe-51855a4d84c1', url: 'https://github.com/pramodk05/java_maven_jenkins.git'
+                git git credentialsId: 'd49e0769-645f-4481-9d70-8df4c54aede4', url: 'https://github.com/itsnagaraja/PP-tf-jf'
             }
         }
 
         stage('Compile Stage') {
             steps {
-                withMaven(maven : 'maven_3.6') {
+                withMaven(maven : 'maven_36') {
                     sh 'mvn clean compile'
                 }
             }
@@ -20,7 +20,7 @@ pipeline {
 
         stage('Test Stage') {
             steps {
-                withMaven(maven : 'maven_3.6') {
+                withMaven(maven : 'maven_36') {
                     sh 'mvn test'
                 }
             }
@@ -29,7 +29,7 @@ pipeline {
 
         stage('Create the Build artifacts Stage (Package)') {
             steps {
-                withMaven(maven : 'maven_3.6') {
+                withMaven(maven : 'maven_36') {
                     sh 'mvn package'
                 }
             }
