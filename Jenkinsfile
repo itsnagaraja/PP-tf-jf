@@ -11,7 +11,7 @@ pipeline {
 
         stage('Compile Stage') {
             steps {
-                withMaven(maven : 'maven_36') {
+                withMaven(maven : 'Maven_36') {
                     sh 'mvn clean compile'
                 }
             }
@@ -20,7 +20,7 @@ pipeline {
 
         stage('Test Stage') {
             steps {
-                withMaven(maven : 'maven_36') {
+                withMaven(maven : 'Maven_36') {
                     sh 'mvn test'
                 }
             }
@@ -29,7 +29,7 @@ pipeline {
 
         stage('Create the Build artifacts Stage (Package)') {
             steps {
-                withMaven(maven : 'maven_36') {
+                withMaven(maven : 'Maven_36') {
                     sh 'mvn package'
                 }
             }
