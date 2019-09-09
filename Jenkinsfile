@@ -5,7 +5,7 @@ pipeline {
 
        stage('SCM Checkout') {
             steps {
-                git git credentialsId: 'd49e0769-645f-4481-9d70-8df4c54aede4', url: 'https://github.com/itsnagaraja/PP-tf-jf'
+                git credentialsId: 'd49e0769-645f-4481-9d70-8df4c54aede4', url: 'https://github.com/itsnagaraja/PP-tf-jf'
             }
         }
 
