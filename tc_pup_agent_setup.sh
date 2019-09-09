@@ -35,7 +35,7 @@ exit;'"
 #EOF
 
 echo "Signing puppet certs from Puppet master"
-ssh -i /opt/pup_setup_tf/puppet_ec2_key -t ubuntu@$pupmaster_pri_ip -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'echo ${tc_server_pri_ip} tomcatpuppetagent.ec2.internal ${tc_server_pri_dns} >> /etc/hosts; \
+ssh -i /opt/puppet/puppet_ec2_key -t ubuntu@$pupmaster_pri_ip -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'echo ${tc_server_pri_ip} tomcatpuppetagent.ec2.internal ${tc_server_pri_dns} >> /etc/hosts; \
 puppet cert list; \
 puppet cert sign tomcatpuppetagent.ec2.internal; \
 exit;'"
