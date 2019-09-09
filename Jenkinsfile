@@ -75,8 +75,8 @@ pipeline {
                     terraform output -json tomcat_private_dns | cut -d '"' -f2 > tc_pri_dns.txt
                     terraform output -json tomcat_public_ip | cut -d '"' -f2 > tc_pub_ip.txt
                     terraform output -json tomcat_private_ip | cut -d '"' -f2 > tc_pri_ip.txt
-                    sed -n '1p' < /opt/pup_setup_tf/ec2_private_dns.txt > pup_master_pri_dns.txt
-                    sed -n '1p' < /opt/pup_setup_tf/ec2_private_ip.txt > pup_master_pri_ip.txt                  
+                    sed -n '1p' < /opt/puppet/ec2_private_dns.txt > pup_master_pri_dns.txt
+                    sed -n '1p' < /opt/puppet/ec2_private_ip.txt > pup_master_pri_ip.txt                  
                 """
             }
         }    
