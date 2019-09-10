@@ -14,7 +14,9 @@ echo $pupmaster_pri_ip puppetmaster.ec2.internal ${pupmaster_pri_dns} >> /etc/ho
 echo ${tc_server_pri_ip} tomcatpuppetagent.ec2.internal ${tc_server_pri_dns} >> /etc/hosts; \
 #wget https://apt.puppetlabs.com/puppet-release-bionic.deb; \
 #dpkg -i puppet-release-bionic.deb; \
+echo " updating puppet"
 apt-get update -y; \
+echo "installing puppet"
 apt-get install puppet -y; \
 exit;'"
 #EOF
