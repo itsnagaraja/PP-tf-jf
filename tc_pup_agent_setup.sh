@@ -28,6 +28,8 @@ ssh -t ubuntu@$TC_SERVER_PRI_DNS -i "tomcat_ec2_key" -oStrictHostKeyChecking=no 
 	echo tomcatpuppetagent.ec2.internal > /etc/hostname; \
 	echo $PUPMASTER_PRI_IP puppetmaster.ec2.internal ${PUPMASTER_PRI_DNS} >> /etc/hosts; \
 	echo ${TC_SERVER_PRI_IP} tomcatpuppetagent.ec2.internal ${TC_SERVER_PRI_DNS} >> /etc/hosts; \
+	wget https://apt.puppetlabs.com/puppet-release-bionic.deb; \
+	dpkg -i puppet-release-bionic.deb; \
 	apt-get update -y; \
 	apt-get install puppet -y; \
 	exit;'"
