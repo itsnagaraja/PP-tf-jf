@@ -22,13 +22,13 @@ exit;'"
 
 echo "Configuring puppet agent on Tomcat"
 #ssh -i tomcat_ec2_key -tt ubuntu@$tc_server_pri_dns -oStrictHostKeyChecking=no <<EOF
-ssh -t ubuntu@$tc_server_pri_dns -i "tomcat_ec2_key" -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'mv /etc/puppetlabs/puppet/puppet.conf /etc/puppetlabs/puppet/puppet.conf.orig; \
-echo [main] > /etc/puppetlabs/puppet/puppet.conf; \
-echo ssldir = /var/lib/puppet/ssl >> /etc/puppetlabs/puppet/puppet.conf; \
-echo certname = tomcatpuppetagent.ec2.internal >> /etc/puppetlabs/puppet/puppet.conf; \
-echo server = puppetmaster.ec2.internal >> /etc/puppetlabs/puppet/puppet.conf; \
-echo environment = production >> /etc/puppetlabs/puppet/puppet.conf; \
-export PATH=$PATH:/opt/puppetlabs/puppet/bin; \
+ssh -t ubuntu@$tc_server_pri_dns -i "tomcat_ec2_key" -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'mv /etc/puppet/puppet.conf /etc/puppet/puppet.conf.orig; \
+echo [main] > /etc/puppet/puppet.conf; \
+echo ssldir = /var/lib/puppet/ssl >> /etc/puppet/puppet.conf; \
+echo certname = tomcatpuppetagent.ec2.internal >> /etc/puppet/puppet.conf; \
+echo server = puppetmaster.ec2.internal >> /etc/puppet/puppet.conf; \
+echo environment = production >> /etc/puppet/puppet.conf; \
+export PATH=$PATH:/opt/puppet/bin; \
 systemctl restart puppet; \
 systemctl enable puppet; \
 exit;'"
