@@ -23,44 +23,83 @@ PUPMASTER_PRI_DNS=`sed -n '1p' < pup_master_pri_dns.txt`
 echo "PUPPET MASTER PRIVATE DNS: $PUPMASTER_PRI_DNS"
 
 printf "\n\n###########SSH TO TOMCAT EC2 INSTANCE AND INSTALL PUPPET AGENT\n"
-sleep 20
-ssh -t ubuntu@$TC_SERVER_PRI_DNS -i "tomcat_ec2_key" -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'hostname tomcatpuppetagent.ec2.internal; \
+sleep 25
+SSH_MSG_1=$(ssh -tt ubuntu@$TC_SERVER_PRI_DNS -i "tomcat_ec2_key" -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'hostname tomcatpuppetagent.ec2.internal; \
 	echo tomcatpuppetagent.ec2.internal > /etc/hostname; \
 	echo $PUPMASTER_PRI_IP puppetmaster.ec2.internal ${PUPMASTER_PRI_DNS} >> /etc/hosts; \
 	echo ${TC_SERVER_PRI_IP} tomcatpuppetagent.ec2.internal ${TC_SERVER_PRI_DNS} >> /etc/hosts; \
-	wget https://apt.puppetlabs.com/puppet-release-bionic.deb; \
-	dpkg -i puppet-release-bionic.deb; \
+	wget https://apt.puppetlabs.com/puppet5-release-bionic.deb; \
+	dpkg -i puppet5-release-bionic.deb; \
 	apt-get update -y; \
 	apt-get install puppet -y; \
-	exit;'"
+	exit;'")
+echo $SSH_MSG_1
+export EXIT_CODE=$?
+export ERR_MSG="Error: ""$SSH_MSG_1"
+test $EXIT_CODE -ne 0 && $EXIT_CODE $ERR_MSG exit
 
 printf "\n\n###########CONFIGURING PUPPET AGENT ON TOMCAT EC2 INSTANCE\n"
-ssh -t ubuntu@$TC_SERVER_PRI_DNS -i "tomcat_ec2_key" -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'mv /etc/puppet/puppet.conf /etc/puppet/puppet.conf.orig; \
-	echo [main] > /etc/puppet/puppet.conf; \
-	echo ssldir = /var/lib/puppet/ssl >> /etc/puppet/puppet.conf; \
-	echo certname = tomcatpuppetagent.ec2.internal >> /etc/puppet/puppet.conf; \
-	echo server = puppetmaster.ec2.internal >> /etc/puppet/puppet.conf; \
-	echo environment = production >> /etc/puppet/puppet.conf; \
-	export PATH=$PATH:/opt/puppetlabs/puppet/bin; \
-	systemctl restart puppet; \
-	systemctl enable puppet; \
-	exit;'"
+ssh_cmd="$(cat <<-EOF
+    ls /home/ubuntu;
+
+    if [ -e /etc/puppet/puppet.conf ]; then
+        echo "Conf file is /etc/puppet/puppet.conf"
+        mv /etc/puppet/puppet.conf /etc/puppet/puppet.conf.orig
+        echo [agent] > /etc/puppet/puppet.conf
+        echo certname = tomcatpuppetagent.ec2.internal >> /etc/puppet/puppet.conf
+        echo server = puppetmaster.ec2.internal >> /etc/puppet/puppet.conf
+        echo environment = production >> /etc/puppet/puppet.conf
+        systemctl restart puppet
+        systemctl enable puppet
+    else
+        echo "Conf file is /etc/puppetlabs/puppet/puppet.conf"
+        mv /etc/puppetlabs/puppet/puppet.conf /etc/puppetlabs/puppet/puppet.conf.orig
+        echo [agent] > /etc/puppetlabs/puppet/puppet.conf
+        echo certname = tomcatpuppetagent.ec2.internal >> /etc/puppetlabs/puppet/puppet.conf
+        echo server = puppetmaster.ec2.internal >> /etc/puppetlabs/puppet/puppet.conf
+        echo environment = production >> /etc/puppetlabs/puppet/puppet.conf
+        systemctl restart puppet
+        systemctl enable puppet
+    fi
+EOF
+)"
+
+
+ssh -tt ubuntu@$TC_SERVER_PRI_DNS -i tomcat_ec2_key -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c '$ssh_cmd'"
+
+echo $ssh_cmd
+export EXIT_CODE=$?
+export ERR_MSG="Error: ""$ssh_cmd"
+test $EXIT_CODE -ne 0 && $EXIT_CODE $ERR_MSG exit
 
 printf "\n\n############SIGNING PUPPET CERTS FROM PUPPET MASTER FOR NEWLY CREATED TOMCAT PUPPET AGENT\n"
-ssh -i /opt/puppet/puppet_ec2_key -t ubuntu@$PUPMASTER_PRI_IP -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'echo ${TC_SERVER_PRI_IP} tomcatpuppetagent.ec2.internal ${TC_SERVER_PRI_DNS} >> /etc/hosts; \
+sleep 20
+SSH_MSG_3=$(ssh -i /opt/puppet/puppet_ec2_key -tt ubuntu@$PUPMASTER_PRI_IP -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'echo ${TC_SERVER_PRI_IP} tomcatpuppetagent.ec2.internal ${TC_SERVER_PRI_DNS} >> /etc/hosts; \
         puppet cert list; \
 	puppet cert sign tomcatpuppetagent.ec2.internal; \
-	exit;'"
+	exit;'")
+echo $SSH_MSG_3
+export EXIT_CODE=$?
+export ERR_MSG="Error: ""$SSH_MSG_3"
+test $EXIT_CODE -ne 0 && $EXIT_CODE $ERR_MSG exit
 
-printf "\n\n############TEST TOMCAT PUPPET AGENT CONNECTION TO PUPPET MASTER AND APPLY CATALOG\n"
-ssh -i tomcat_ec2_key -t ubuntu@$TC_SERVER_PRI_DNS -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'puppet agent --test; \
-	exit;'"
+#printf "\n\n############TEST TOMCAT PUPPET AGENT CONNECTION TO PUPPET MASTER AND APPLY CATALOG\n"
+#SSH_MSG_4=$(ssh -i tomcat_ec2_key -tt ubuntu@$TC_SERVER_PRI_DNS -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'puppet agent --test; \
+#	sleep 25; \
+#	exit;'")
+#echo $SSH_MSG_4
+#export EXIT_CODE=$?
+#export ERR_MSG="Error: ""$SSH_MSG_4"
+#test $EXIT_CODE -ne 0 && $EXIT_CODE $ERR_MSG exit
 
 printf "\n\n############INSTALLING JAVA PUPPET MODULE ON PUPPET MASTER- PREREQUISITE FOR RUNNING TOMCAT\n"
-ssh -i /opt/puppet/puppet_ec2_key -t ubuntu@$PUPMASTER_PRI_IP -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'puppet module install puppetlabs-java --version 5.0.1 --modulepath=/etc/puppet/code/environments/production/modules; \
-	PROD_MODULE_DIR="/etc/puppet/code/environments/production/modules"; \
+SSH_MSG_5=$(ssh -i /opt/puppet/puppet_ec2_key -tt ubuntu@$PUPMASTER_PRI_IP -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'puppet module install puppetlabs-java --version 5.0.1 --modulepath=/etc/puppet/code/environments/production/modules; \
 	cp /etc/puppet/code/environments/production/modules/java/examples/init.pp /etc/puppet/code/environments/production/manifests/java.pp; \
-	exit;'"
+	exit;'")
+echo $SSH_MSG_5
+export EXIT_CODE=$?
+export ERR_MSG="Error: ""$SSH_MSG_5"
+test $EXIT_CODE -ne 0 && $EXIT_CODE $ERR_MSG exit
 
 printf "\n\n############COPYING THE PROJECT ARTIFACTS (.war) TO PUPPET MASTER\n"
 scp -i /opt/puppet/puppet_ec2_key ${WORKSPACE}/target/*.war ubuntu@$PUPMASTER_PRI_IP:/tmp
@@ -70,11 +109,15 @@ fi
 
 
 printf "\n\n############INSTALLING PUPPET TOMCAT MODULE AND DEPENDENCIES ON PUPPET MASTER\n"
-ssh -i /opt/puppet/puppet_ec2_key -t ubuntu@$PUPMASTER_PRI_IP -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'puppet module install puppetlabs-stdlib --modulepath=/etc/puppet/code/environments/production/modules; \
+SSH_MSG_6=$(ssh -i /opt/puppet/puppet_ec2_key -tt ubuntu@$PUPMASTER_PRI_IP -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'puppet module install puppetlabs-stdlib --modulepath=/etc/puppet/code/environments/production/modules; \
 	puppet module install puppetlabs-tomcat --modulepath=/etc/puppet/code/environments/production/modules; \
 	mkdir -p /etc/puppet/code/environments/production/modules/tomcat/files; \
 	cp /tmp/mvn-hello-world.war /etc/puppet/code/environments/production/modules/tomcat/files; \
-	exit;'"
+	exit;'")
+echo $SSH_MSG_6
+export EXIT_CODE=$?
+export ERR_MSG="Error: ""$SSH_MSG_6"
+test $EXIT_CODE -ne 0 && $EXIT_CODE $ERR_MSG exit
 
 printf "\n\n############COPYING THE PUPPET MANIFESTS FOR TOMCAT TO PUPPET MASTER\n"
 scp -i /opt/puppet/puppet_ec2_key ${WORKSPACE}/tomcat.pp ubuntu@$PUPMASTER_PRI_IP:/tmp
@@ -82,17 +125,23 @@ if [ $? -eq 0 ]; then
         printf "\n Successfully copied\n";
 fi
 
-ssh -i /opt/puppet/puppet_ec2_key -t ubuntu@$PUPMASTER_PRI_IP -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'cp /tmp/tomcat.pp /etc/puppet/code/environments/production/manifests; \
-	exit;'"
+SSH_MSG_7=$(ssh -i /opt/puppet/puppet_ec2_key -tt ubuntu@$PUPMASTER_PRI_IP -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'cp /tmp/tomcat.pp /etc/puppet/code/environments/production/manifests; \
+	exit;'")
+echo $SSH_MSG_7
+export EXIT_CODE=$?
+export ERR_MSG="Error: ""$SSH_MSG_7"
+test $EXIT_CODE -ne 0 && $EXIT_CODE $ERR_MSG exit
 
 printf "\n\n###########DEPLOYING WAR TO TOMCAT APP SERVER USING PUPPET MANIFESTS; APPLYING MASTER CATALOG\n"
-ssh -i tomcat_ec2_key -t ubuntu@$TC_SERVER_PRI_DNS -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'puppet agent --test; \
-	if [ $? -eq 0 ];
-       	then
-	printf "\n\n##### DEPLOYMENT WAS SUCCESSFUL \n"
-	else
-	printf "\n\n#### DEPLOYMENT EXITED WITH ERRORS\n"
-        fi
-        exit;'"
+SSH_MSG_8=$(ssh -i tomcat_ec2_key -tt ubuntu@$TC_SERVER_PRI_DNS -oStrictHostKeyChecking=no "/usr/bin/sudo bash -c 'puppet agent --test; \
+	exit;'")
+echo $SSH_MSG_8
+
+export EXIT_CODE=$?
+export ERR_MSG="Error: ""$SSH_MSG_8"
+test $EXIT_CODE -ne 0 && $EXIT_CODE $ERR_MSG exit
+
+printf "\n\n##### DEPLOYMENT WAS SUCCESSFUL \n"
+
 printf "\n\n########## PLEASE ACCESS THE APPLICATION USING BELOW URL\n"
-printf "\n\nhttp://${TC_SERVER_PUB_DNS}:8080/mv-hello-world\n"
+printf "\n\nhttp://${TC_SERVER_PUB_DNS}:8080/mvn-hello-world\n"
